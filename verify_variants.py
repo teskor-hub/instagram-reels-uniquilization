@@ -1,4 +1,4 @@
-"""Проверка реальных MP4: декодирование, потоки, хеши и измерения картинки."""
+"""Verify actual MP4 files: decoding, streams, hashes, and visual measurements."""
 
 import argparse
 from fractions import Fraction
@@ -25,12 +25,12 @@ def capture(command):
 def require_tools():
     for name in ("ffmpeg", "ffprobe"):
         if not shutil.which(name):
-            raise ValueError(f"{name} не найден в PATH")
+            raise ValueError(f"{name} was not found in PATH")
 
 
 def validate_prefix(prefix):
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}", prefix):
-        raise ValueError("prefix: 1–80 латинских букв, цифр, '_' или '-'; первый символ — буква/цифра")
+        raise ValueError("prefix: 1–80 Latin letters, digits, '_' or '-'; the first character must be a letter or digit")
 
 
 def probe(path):
@@ -66,7 +66,7 @@ def sampled_gray(path):
 
 def visual_metrics(left, right):
     if not left or len(left) != len(right):
-        raise ValueError("Визуальная выборка пуста или длины выборок различаются")
+        raise ValueError("The visual sample is empty or sample lengths differ")
     length = len(left)
     mae = sum(abs(a - b) for a, b in zip(left, right)) / length / 255
     mean_left, mean_right = sum(left) / length, sum(right) / length
@@ -82,7 +82,7 @@ def primary_streams(metadata):
     video = next((s for s in metadata["streams"] if s["codec_type"] == "video"), None)
     audio = next((s for s in metadata["streams"] if s["codec_type"] == "audio"), None)
     if video is None or audio is None:
-        raise ValueError("Нужен источник с видео и аудио; пустую дорожку автоматически не добавляем")
+        raise ValueError("The source must contain video and audio; an empty track is not added automatically")
     return video, audio
 
 
@@ -93,7 +93,7 @@ def verify(source, output, prefix):
     expected = [f"{prefix}_u{index:02d}.mp4" for index in range(1, 13)]
     actual = sorted(p.name for p in output.glob("*.mp4"))
     if actual != expected:
-        raise ValueError("Ожидались ровно 12 MP4 с именами prefix_u01.mp4 … prefix_u12.mp4")
+        raise ValueError("Expected exactly 12 MP4 files named prefix_u01.mp4 … prefix_u12.mp4")
     metadata = probe(source)
     source_video, source_audio = primary_streams(metadata)
     source_duration = float(metadata["format"]["duration"])
@@ -135,7 +135,7 @@ def verify(source, output, prefix):
             mae, correlation = visual_metrics(samples[left], samples[right])
             pairs.append({"left": expected[left], "right": expected[right], "visual_mae": mae, "correlation": correlation})
     unique = {field: len({item[field] for item in items}) for field in HASH_FIELDS}
-    errors.extend(f"{field}: только {count}/12 разных значений" for field, count in unique.items() if count != 12)
+    errors.extend(f"{field}: only {count}/12 distinct values" for field, count in unique.items() if count != 12)
     correlations = [p["correlation"] for p in pairs if p["correlation"] is not None]
     summary = {
         "status": "FAIL" if errors else "PASS", "files": 12,
@@ -160,21 +160,21 @@ def write_report(output, report):
         f"<td>{item['visual_mae'] * 100:.6f}%</td><td>{item['correlation']}</td></tr>"
         for item in report["files"]
     )
-    page = """<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Проверка 12 вариантов</title><style>
+    page = """<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>12-Variant Verification</title><style>
 :root{color-scheme:light dark;--bg:#f4f6fa;--card:#fff;--text:#172139;--line:#dbe1ee;--accent:#6354d8}
 @media(prefers-color-scheme:dark){:root{--bg:#101520;--card:#1a2232;--text:#e9eef8;--line:#354158;--accent:#b3a6ff}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui}
 main{max-width:1120px;margin:auto;padding:36px 20px}h1{font-size:36px;margin-bottom:8px}a{color:var(--accent)}
 .card{padding:20px;background:var(--card);border:1px solid var(--line);border-radius:16px;margin:18px 0;overflow:auto}
 table{width:100%;border-collapse:collapse}td,th{padding:10px;text-align:left;border-bottom:1px solid var(--line)}pre{white-space:pre-wrap;overflow-wrap:anywhere}
-</style><main><p>INSTAGRAM REELS / LOCAL VERIFICATION</p><h1>12 вариантов · __STATUS__</h1>
-<p>Проверены реальные файлы: полное декодирование, видеокадры, длительность, SHA-256 контейнеров и потоков.</p>
-<div class="card"><b>Граница проверки.</b> PASS означает прохождение технических проверок.
-MAE и корреляция рассчитаны на 4 кадрах/с в 64×64 grayscale; мелкие детали и цвета нужно оценить глазами.
-Результат не измеряет распознавание дубликатов Instagram.</div>
-<div class="card"><table><thead><tr><th>Файл</th><th>Байт</th><th>Секунд</th><th>Кадров</th><th>MAE к source</th><th>Корреляция</th></tr></thead><tbody>__ROWS__</tbody></table></div>
-<div class="card"><h2>Сводка</h2><pre>__SUMMARY__</pre></div><p><a href="upload_plan.html">План публикаций и подписи</a> · <a href="unique_verification.json">Все хеши и 66 пар сравнений</a></p></main></html>"""
+</style><main><p>INSTAGRAM REELS / LOCAL VERIFICATION</p><h1>12 variants · __STATUS__</h1>
+<p>Actual files verified: full decoding, video frames, duration, and SHA-256 hashes of containers and streams.</p>
+<div class="card"><b>Verification scope.</b> PASS means the technical checks passed.
+MAE and correlation are calculated from 4 frames/s in 64×64 grayscale; inspect fine details and colours manually.
+This result does not measure Instagram duplicate detection.</div>
+<div class="card"><table><thead><tr><th>File</th><th>Bytes</th><th>Seconds</th><th>Frames</th><th>MAE vs. source</th><th>Correlation</th></tr></thead><tbody>__ROWS__</tbody></table></div>
+<div class="card"><h2>Summary</h2><pre>__SUMMARY__</pre></div><p><a href="upload_plan.html">Posting plan and captions</a> · <a href="unique_verification.json">All hashes and 66 pairwise comparisons</a></p></main></html>"""
     page = page.replace("__STATUS__", summary["status"]).replace("__ROWS__", rows).replace("__SUMMARY__", html.escape(json.dumps(summary, ensure_ascii=False, indent=2)))
     (output / "verification.html").write_text(page, encoding="utf-8")
 

@@ -1,6 +1,6 @@
 {
   "name": "original_010_12",
-  "description": "Точные CRF, audio gain и luma-флаги исходной пачки 010; порядок сохранён.",
+  "description": "Exact CRF values, audio gains, and luma flags from the original 010 batch, in their original order.",
   "variants": [
     {"index": 1, "crf": 27.5, "audio_gain_db": -0.03, "luma_shift": false},
     {"index": 2, "crf": 27.4, "audio_gain_db": -0.06, "luma_shift": false},

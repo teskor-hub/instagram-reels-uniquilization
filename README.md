@@ -2,43 +2,43 @@
 
 # Instagram Reels Uniquilization
 
-**Один готовый Reel → 12 вариантов → проверка потоков → план публикаций**
+**One finished Reel → 12 variants → stream verification → posting plan**
 
-Python · FFmpeg · H.264 / libx264 · AAC · SHA-256 · локальный HTML
+Python · FFmpeg · H.264 / libx264 · AAC · SHA-256 · local HTML
 
-Пайплайн [teskor-hub](https://github.com/teskor-hub), выделенный из рабочей пачки **010**.
+A [teskor-hub](https://github.com/teskor-hub) pipeline extracted from the working **010** batch.
 
 </div>
 
 ---
 
-Скрипт берёт законченный MP4 и создаёт 12 технически различающихся версий с сохранением монтажа, размера кадра и темпа. В основе — **разные CRF, небольшой сдвиг luma у части вариантов, индивидуальный audio gain и повторное кодирование**. Затем он проверяет реальные файлы и собирает план с 12 отдельными подписями.
+The script takes a completed MP4 and creates 12 technically distinct versions while preserving the edit, frame size, and pacing. It uses **different CRF values, a small luma shift for some variants, individual audio gain, and re-encoding**. It then verifies the actual files and builds a plan with 12 distinct captions.
 
-Здесь опубликован именно метод из Instagram-пачки `010`: настройки перенесены без изменения. При проверке на исходном ролике все 12 новых MP4 **побайтно совпали с первоначальными файлами**. Повторный полный прогон дал тот же результат.
+This repository publishes the exact method used for Instagram batch `010`: the settings were transferred unchanged. When verified against the source Reel, all 12 new MP4s **matched the original files byte for byte**. A repeated full run produced the same result.
 
-> **Что здесь означает «уникализация».** Различаются SHA-256 файлов, сжатых видео- и аудиопотоков, а также декодированного звука. Это измеримый результат. Он не доказывает, что Instagram посчитает ролики разным контентом, и не прогнозирует охваты. Смысловое содержание видео остаётся прежним.
+> **What “uniquilization” means here.** The SHA-256 values of the files, compressed video and audio streams, and decoded audio differ. That is a measurable result. It does not prove that Instagram will consider the Reels different content, and it does not predict reach. The video’s semantic content remains the same.
 
-## Навигация
+## Navigation
 
-- [Быстрый старт](#быстрый-старт)
-- [Полный пайплайн](#полный-пайплайн)
-- [Точные настройки 12 вариантов](#точные-настройки-12-вариантов)
-- [Почему меняются файлы и потоки](#почему-меняются-файлы-и-потоки)
-- [Правило подписей](#правило-подписей)
-- [Что проверяется](#что-проверяется)
-- [Повторная проверка и обновление подписей](#повторная-проверка-и-обновление-подписей)
-- [Ограничения и разбор ошибок](#ограничения-и-разбор-ошибок)
-- [Структура репозитория](#структура-репозитория)
+- [Quick start](#quick-start)
+- [Full pipeline](#full-pipeline)
+- [Exact settings for the 12 variants](#exact-settings-for-the-12-variants)
+- [Why files and streams change](#why-files-and-streams-change)
+- [Caption rule](#caption-rule)
+- [What is verified](#what-is-verified)
+- [Re-verification and caption updates](#re-verification-and-caption-updates)
+- [Limitations and troubleshooting](#limitations-and-troubleshooting)
+- [Repository structure](#repository-structure)
 
-## Быстрый старт
+## Quick start
 
-### 1. Подготовить окружение
+### 1. Prepare the environment
 
-Нужны **Python 3.10+**, Git и сборка [FFmpeg](https://ffmpeg.org/download.html) с `ffmpeg`, `ffprobe`, `libx264` и `aac` в `PATH`. Обработка выполняется на CPU. Внешних Python-зависимостей, API-ключей и модели генерации для этого этапа нет.
+You need **Python 3.10+**, Git, and an [FFmpeg](https://ffmpeg.org/download.html) build with `ffmpeg`, `ffprobe`, `libx264`, and `aac` in `PATH`. Processing runs on the CPU. This step has no external Python dependencies, API keys, or generation model.
 
-Проверенная среда: Windows, Python 3.14, FFmpeg 8.0.1. На Linux/macOS используются те же Python-скрипты, но полный прогон в этой публикации проверен только на Windows.
+Verified environment: Windows, Python 3.14, FFmpeg 8.0.1. The scripts are intended to run on Linux/macOS as well, but end-to-end operation was verified only on Windows for this release.
 
-Команды ниже — **PowerShell**, по одной строке:
+The commands below are **PowerShell**, one per line:
 
 ```powershell
 git clone https://github.com/teskor-hub/instagram-reels-uniquilization.git
@@ -50,9 +50,9 @@ ffmpeg -hide_banner -h encoder=libx264
 ffmpeg -hide_banner -h encoder=aac
 ```
 
-### 2. Подготовить мастер и подписи
+### 2. Prepare the master and captions
 
-Создайте папку `input`, положите в неё готовый ролик как `reel.mp4` и подготовьте `captions.json` с **12 подписями именно для него**.
+Create an `input` directory, put the completed Reel there as `reel.mp4`, and prepare `captions.json` with **12 captions specifically for that Reel**.
 
 ```powershell
 New-Item -ItemType Directory -Force input
@@ -60,245 +60,245 @@ Copy-Item examples\captions_010.json input\captions.json
 notepad input\captions.json
 ```
 
-**Перед запуском перепишите примеры.** Файл `examples/captions_010.json` показывает формат и содержит подписи конкретной старой пачки. Это не универсальный набор для копирования в следующие публикации.
+**Rewrite the examples before running the pipeline.** `examples/captions_010.json` demonstrates the format and contains captions from one specific older batch. It is not a universal set to copy into future posts.
 
-Формат: объект JSON с полем `captions`, содержащим массив из 12 непустых строк; необязательное поле `description`. Переносы строк внутри подписи записываются как `\n`. Сохраните JSON в UTF-8.
+Format: a JSON object with a `captions` field containing an array of 12 non-empty strings; the `description` field is optional. Write line breaks inside a caption as `\n`. Save the JSON as UTF-8.
 
-Мастер должен быть уже смонтирован: надписи внутри кадра, переходы и музыка включены в MP4. Для исходного `010` именно так и было — дополнительный слой текста при уникализации не создавался. Проверенный мастер: **768×1376, 24 fps, 145 кадров, 6,042 с, stereo**.
+The master must already be edited: on-frame text, transitions, and music are included in the MP4. This was also true for source `010`—the uniquilization process added no separate text layer. Verified master: **768×1376, 24 fps, 145 frames, 6.042 s, stereo**.
 
-### 3. Запустить всю цепочку
+### 3. Run the full sequence
 
 ```powershell
 python uniquify.py "input\reel.mp4" "output\reel_010" --prefix 010 --captions "input\captions.json"
 ```
 
-Скрипт последовательно создаст варианты, полностью декодирует их для проверки, сравнит хеши и кадры, соберёт подписи и дважды проверит согласованность JSON с HTML.
+The script sequentially creates the variants, fully decodes them for verification, compares hashes and frames, assembles the posting plan from the supplied captions, and verifies JSON-to-HTML consistency twice.
 
-После `PASS`:
+After `PASS`:
 
 ```powershell
 Start-Process "output\reel_010\verification.html"
 Start-Process "output\reel_010\upload_plan.html"
 ```
 
-HTML работает локально, без сервера и внешних CDN, со светлой и тёмной темой. В плане укажите время первой публикации **T0 по Москве** и нажмите «Рассчитать даты».
+The HTML works locally, without a server or external CDNs, with light and dark themes. In the plan, enter the first posting time **T0 in Moscow time** and click “Calculate dates”.
 
-### Что появится в результате
+### What the result contains
 
 ```text
 output/reel_010/
 ├── 010_u01.mp4
 ├── ...
 ├── 010_u12.mp4
-├── manifest.json             # профиль, версии инструментов, хеш источника
-├── unique_verification.json  # хеши, параметры, сравнение всех 66 пар
-├── verification.html         # читаемый технический отчёт
-├── posting_plan.json         # файл → подпись → день → слот
-└── upload_plan.html          # локальный календарь публикаций
+├── manifest.json             # profile, tool versions, source hash
+├── unique_verification.json  # hashes, parameters, comparison of all 66 pairs
+├── verification.html         # readable technical report
+├── posting_plan.json         # file → caption → day → slot
+└── upload_plan.html          # local posting calendar
 ```
 
-Папка результата должна быть новой. Существующие пачки не перезаписываются. До успешной проверки сборка живёт в соседней папке `.имя.partial-...`; при ошибке она сохраняется для диагностики, а итоговое имя ей не присваивается.
+The output directory must be new. Existing batches are never overwritten. Until verification succeeds, the build lives in a neighboring `.name.partial-...` directory; if an error occurs, it is kept for diagnostics and is not given the final name.
 
-## Полный пайплайн
+## Full pipeline
 
 ```mermaid
 flowchart TD
-    A[Готовый мастер MP4] --> C[Проверка входа]
-    B[12 подписей для этого ролика] --> C
-    P[Профиль original_12.json] --> C
-    C --> D[12 отдельных кодирований из одного мастера]
-    D --> E[CRF и выборочный luma shift]
-    E --> F[Audio gain и AAC 48 kHz]
-    F --> G[MP4 и faststart]
-    G --> H[Полное декодирование и SHA-256]
-    H --> I[Кадры, длительность, 66 пар сравнений]
-    I --> J[План 4 дня × 3 слота и проверка подписей]
-    J --> K[Итоговая папка и два HTML]
-    K --> L[Ручной просмотр и публикация]
+    A[Completed master MP4] --> C[Input validation]
+    B[12 captions for this Reel] --> C
+    P[original_12.json profile] --> C
+    C --> D[12 separate encodes from one master]
+    D --> E[CRF and selective luma shift]
+    E --> F[Audio gain and AAC 48 kHz]
+    F --> G[MP4 and faststart]
+    G --> H[Full decoding and SHA-256]
+    H --> I[Frames, duration, 66 comparison pairs]
+    I --> J[4-day × 3-slot plan and caption validation]
+    J --> K[Final directory and two HTML files]
+    K --> L[Manual review and publishing]
 ```
 
-| Этап | Что происходит | Зачем |
+| Stage | What happens | Why |
 |---|---|---|
-| Подготовка | Монтаж, переходы, музыка и экранные надписи уже в мастере | Каждая версия строится из одного законченного видео |
-| Проверка входа | Проверяются инструменты, профиль, подписи, видео/аудио, чётные размеры и 8-bit SDR `yuv420p` | Ошибки входа обнаруживаются до рендера |
-| Варианты | Каждый MP4 кодируется прямо из мастера | Нет цепочки повторного сжатия `u01 → u02 → u03` |
-| Видео | `libx264`, индивидуальный CRF, luma-фильтр у 7 вариантов | Меняются сжатый поток и часть декодированных пикселей |
-| Звук | Уменьшение уровня и AAC 192 kbit/s, 48 kHz | Меняются аудиопакеты и декодированные PCM-данные |
-| Контейнер | Отключение переноса метаданных/глав, очистка полей, `+faststart` | Контролируемая упаковка результата |
-| Контроль | 12 файлов, четыре семейства хешей, видео/аудиопараметры, метрики | Измеряется фактический результат обработки |
-| Подписи | 12 текстов, поиск дублей и близких формулировок | Одна и та же подпись не размножается на всю пачку |
-| План | Четыре дня, три слота в день | Файлы, тексты и относительное время собраны в одном месте |
+| Preparation | The edit, transitions, music, and on-screen text are already in the master | Every version is built from one completed video |
+| Input validation | Tools, profile, captions, video/audio, even dimensions, and 8-bit SDR `yuv420p` are checked | Input errors are found before rendering |
+| Variants | Each MP4 is encoded directly from the master | No repeated-compression chain `u01 → u02 → u03` |
+| Video | `libx264`, an individual CRF, and a luma filter for 7 variants | The compressed stream and some decoded pixels change |
+| Audio | Reduced gain and AAC 192 kbit/s, 48 kHz | Audio packets and decoded PCM data change |
+| Container | Metadata/chapter transfer is disabled, fields are cleared, and `+faststart` is used | Controlled packaging of the result |
+| Validation | 12 files, four hash families, video/audio parameters, and metrics | The actual processing result is measured |
+| Captions | 12 texts, with duplicate and near-duplicate detection | One caption is not replicated across the entire batch |
+| Plan | Four days, three slots per day | Files, texts, and relative times are assembled in one place |
 
-В репозитории реализован участок **от готового мастера до локальной пачки публикаций**. Создание исходного видео и его ручная загрузка в Instagram остаются внешними этапами. Скрипты не подключаются к Instagram и не управляют аккаунтами.
+The repository implements the section **from a completed master to a local posting batch**. Creating the source video and uploading it manually to Instagram remain external stages. The scripts do not connect to Instagram or control accounts.
 
-## Точные настройки 12 вариантов
+## Exact settings for the 12 variants
 
-Источник настроек — [`profiles/original_12.json`](profiles/original_12.json). Порядок совпадает с исходной пачкой `010`.
+The source of the settings is [`profiles/original_12.json`](profiles/original_12.json). The order matches the original `010` batch.
 
-| Вариант | CRF | Luma shift | Audio gain |
+| Variant | CRF | Luma shift | Audio gain |
 |---|---:|:---:|---:|
 | u01 | 27.5 | — | −0.03 dB |
 | u02 | 27.4 | — | −0.06 dB |
-| u03 | 20.0 | да | −0.09 dB |
-| u04 | 19.9 | да | −0.12 dB |
-| u05 | 19.8 | да | −0.15 dB |
+| u03 | 20.0 | yes | −0.09 dB |
+| u04 | 19.9 | yes | −0.12 dB |
+| u05 | 19.8 | yes | −0.15 dB |
 | u06 | 27.3 | — | −0.18 dB |
 | u07 | 27.2 | — | −0.21 dB |
 | u08 | 27.1 | — | −0.24 dB |
-| u09 | 19.7 | да | −0.27 dB |
-| u10 | 19.6 | да | −0.30 dB |
-| u11 | 19.5 | да | −0.33 dB |
-| u12 | 19.4 | да | −0.36 dB |
+| u09 | 19.7 | yes | −0.27 dB |
+| u10 | 19.6 | yes | −0.30 dB |
+| u11 | 19.5 | yes | −0.33 dB |
+| u12 | 19.4 | yes | −0.36 dB |
 
-Общие параметры кодирования:
+Shared encoding parameters:
 
 ```text
 video:      libx264 / preset medium / High / level 4.1 / yuv420p
 GOP:        keyint=240:min-keyint=24:scenecut=40
-audio:      aac / 192k / 48000 Hz / исходное число каналов
+audio:      aac / 192k / 48000 Hz / source channel count
 metadata:   map_metadata=-1 / map_chapters=-1
 clear:      title, comment, description, video/audio handler_name
-flags:      bitexact для кодеков; исходный fflags +bitexact
+flags:      bitexact for codecs; source fflags +bitexact
 container:  MP4 / +faststart
 ```
 
-Разрешение, FPS и количество кадров проверяются относительно мастера. Изменения скорости, зеркалирования, кропа и наложения шума в этом профиле нет. `keyint=240` задаёт верхний интервал GOP; это не означает, что шестисекундное видео будет иметь длину 240 кадров.
+Resolution, FPS, and frame count are verified against the master. This profile does not change speed, mirror the image, crop it, or add noise. `keyint=240` sets the maximum GOP interval; it does not mean that a six-second video will be 240 frames long.
 
-## Почему меняются файлы и потоки
+## Why files and streams change
 
-### CRF: новое сжатие видеоданных
+### CRF: new video-data compression
 
-CRF задаёт режим качества `libx264`. Другая настройка может изменить квантование и сжатые данные. В исходном методе соседние значения отличаются на 0.1, а варианты разделены на группы около 27 и 20. Конкретно на ролике `010` этого вместе с luma-фильтром достаточно для 12 разных видеопотоков.
+CRF controls the `libx264` quality mode. A different setting can change quantization and compressed data. In the original method, adjacent values differ by 0.1, and the variants are split into groups around 27 and 20. For Reel `010`, this combined with the luma filter was enough to produce 12 distinct video streams.
 
-Меньшее значение CRF обычно означает более высокое качество и больший файл. Это не процент качества и не заранее заданный битрейт. Для другого видео близкие значения могут дать совпадения — поэтому различие проверяется после кодирования. Параметры интерфейса описаны в [документации FFmpeg/libx264](https://ffmpeg.org/ffmpeg-codecs.html#libx264_002c-libx264rgb).
+A lower CRF usually means higher quality and a larger file. It is neither a quality percentage nor a predetermined bitrate. For another video, nearby values can produce matches, which is why differences are verified after encoding. Interface parameters are described in the [FFmpeg/libx264 documentation](https://ffmpeg.org/ffmpeg-codecs.html#libx264_002c-libx264rgb).
 
-### Luma: небольшое изменение компоненты яркости
+### Luma: a small change to the brightness component
 
-Точное выражение исходного метода:
+The exact expression from the original method:
 
 ```text
 lut=y='if(eq(mod(val,28),0),val,val+1)'
 ```
 
-Для 8-bit YUV значений, кратных 28, яркость сохраняется; для остальных запрашивается прибавка одной единицы с ограничением диапазоном формата. Например, `0 → 0`, `28 → 28`, `100 → 101`. Чистый ноль фильтр оставляет нулём, но это не обещание побайтного сохранения чёрных кадров после lossy-кодирования.
+For 8-bit YUV values divisible by 28, brightness is preserved; for all other values, a one-unit increase is requested, subject to the format range limit. For example, `0 → 0`, `28 → 28`, `100 → 101`. The filter leaves pure zero at zero, but this does not promise byte-for-byte preservation of black frames after lossy encoding.
 
-Это **фиксированный дискретный сдвиг**, а не случайный шум. Число 28 перенесено из рабочего скрипта; доказательства его особой эффективности против Instagram здесь нет. Назначение Y-компоненты и переменной `val` описано в [документации LUT-фильтров](https://ffmpeg.org/ffmpeg-filters.html#lut_002c-lutrgb_002c-lutyuv).
+This is a **fixed discrete shift**, not random noise. The number 28 was transferred from the working script; there is no evidence here that it is especially effective against Instagram. The purposes of the Y component and the `val` variable are described in the [LUT filter documentation](https://ffmpeg.org/ffmpeg-filters.html#lut_002c-lutrgb_002c-lutyuv).
 
-### Audio gain: различается и декодированный звук
+### Audio gain: decoded audio changes too
 
-Вариант `n` получает `−0.03 × n dB`. Линейная амплитуда умножается на `10^(gain/20)`: диапазон этой пачки примерно **0.9966…0.9594** от исходного уровня. Звук немного тише, без намеренного изменения темпа или высоты тона, после чего кодируется в AAC с целевой скоростью 192 kbit/s.
+Variant `n` receives `−0.03 × n dB`. Linear amplitude is multiplied by `10^(gain/20)`: this batch ranges from approximately **0.9966…0.9594** of the source level. The audio becomes slightly quieter, without an intentional change to tempo or pitch, then is encoded as AAC with a target bitrate of 192 kbit/s.
 
-Новая AAC-дорожка сама по себе ещё не доказывает различие звуковых отсчётов. Поэтому отдельная проверка декодирует каждую версию в PCM signed 16-bit / 48 kHz и сравнивает его SHA-256. Реализация уровня опирается на [фильтр `volume`](https://ffmpeg.org/ffmpeg-filters.html#volume).
+A new AAC track alone does not yet prove that the audio samples differ. A separate check therefore decodes every version to PCM signed 16-bit / 48 kHz and compares its SHA-256. Gain implementation relies on the [`volume` filter](https://ffmpeg.org/ffmpeg-filters.html#volume).
 
-На тишине gain не создаёт содержательного различия: ноль остаётся нулём. Такой вход может не пройти требование 12 разных декодированных дорожек.
+On silence, gain produces no meaningful difference: zero remains zero. Such input may fail the requirement for 12 distinct decoded tracks.
 
-### Метаданные и MP4: упаковка отдельно от содержания
+### Metadata and MP4: packaging separate from content
 
-`-map_metadata -1` отключает автоматический перенос глобальных метаданных, `-map_chapters -1` — глав; перечисленные поля явно очищаются. Служебная структура MP4, brands и технические данные кодеков всё равно существуют. Выражение «файл без каких-либо метаданных» для этого результата неверно. Семантика mapping описана в [документации FFmpeg](https://ffmpeg.org/ffmpeg-doc.html#Advanced-options).
+`-map_metadata -1` disables automatic transfer of global metadata, and `-map_chapters -1` disables chapter transfer; the listed fields are explicitly cleared. MP4 container structure, brands, and codec technical data still exist. Calling this result “a file without any metadata” would be incorrect. Mapping semantics are described in the [FFmpeg documentation](https://ffmpeg.org/ffmpeg-doc.html#Advanced-options).
 
-`+faststart` переносит индекс MP4 к началу файла для начала воспроизведения до полной загрузки. Это свойство контейнера, а не отдельный метод изменения картинки. См. [MOV/MP4 muxer](https://ffmpeg.org/ffmpeg-formats.html#mov_002c-mp4_002c-ismv).
+`+faststart` moves the MP4 index to the beginning of the file so playback can start before the entire file is downloaded. This is a container property, not a separate method of changing the image. See the [MOV/MP4 muxer documentation](https://ffmpeg.org/ffmpeg-formats.html#mov_002c-mp4_002c-ismv).
 
-`bitexact` не является генератором случайности. Повторная обработка теми же версиями инструментов и настройками на проверенном ПК дала одинаковые файлы. Повторный запуск **не создаёт ещё 12 новых уникализаций** относительно прошлой пачки.
+`bitexact` is not a randomness generator. Reprocessing with the same tool versions and settings on the verified PC produced identical files. Re-running **does not create 12 additional variants distinct from the previous batch**.
 
-## Правило подписей
+## Caption rule
 
-**Один общий каркас допустим. Одинаковые подписи — нет.**
+**One shared structure is allowed. Identical captions are not.**
 
-Например, можно использовать структуру:
-
-```text
-HOOK: самостоятельная мысль, наблюдение или вопрос
-BODY: конкретная деталь этого ролика и отдельный смысловой акцент
-CTA: при необходимости — подходящий вопрос, а не одинаковый призыв везде
-HASHTAGS: релевантный набор для этой формулировки
-```
-
-Каждая из 12 подписей должна быть отдельным текстом по сути: другой акцент, наблюдение, эмоция, интерпретация или вопрос. Копирование 1 в 1, замена номера/эмодзи, перестановка hashtags или несколько синонимов в одинаковом предложении не подходят. Новый ролик получает новый набор, а не автоматическую подстановку старого файла.
-
-Одна сцена может получить разные ракурсы текста: подготовка утром, смена настроения, забавное противоречие, заметная деталь, вопрос зрителю. Все утверждения должны соответствовать тому, что действительно есть в ролике.
-
-### Задание для подготовки 12 текстов
-
-Скопируйте этот **шаблон задания**, заполните описание и факты. Повторяется структура задания, а не готовые captions:
+For example, this structure can be used:
 
 ```text
-Ролик: [что происходит, какие события и детали видны]
-Аудитория и язык: [...]
-Тон: [...]
-Подтверждённые факты: [...]
-Ранее использованные подписи, которые нельзя повторять: [...]
-
-Напиши 12 Instagram captions для 12 вариантов этого ролика.
-Общий каркас: hook → конкретная мысль/деталь → необязательный CTA → hashtags.
-В каждой подписи нужен самостоятельный смысловой акцент и новая формулировка.
-Не копируй прежние подписи. Не ограничивайся заменой номера, emoji или пары слов.
-Не придумывай события и факты, которых нет в описании.
-В каждой подписи минимум 3 релевантных hashtags; полные наборы не повторяются.
-Проверь тексты попарно и перепиши близкие варианты.
-Верни JSON вида {"captions": [12 строк]}; переносы внутри строки обозначь \n.
+HOOK: a standalone thought, observation, or question
+BODY: a concrete detail from this Reel and a different perspective
+CTA: if needed, a suitable question rather than the same prompt everywhere
+HASHTAGS: a relevant set for this wording
 ```
 
-Скрипт не вызывает языковую модель и не генерирует подписи. Он получает подготовленный JSON.
+Each of the 12 captions must be a distinct text in substance: a different emphasis, observation, emotion, interpretation, or question. Copying 1:1, changing a number/emoji, rearranging hashtags, or swapping a few synonyms in the same sentence does not qualify. A new Reel receives a new set, not automatic substitution of an old file.
 
-### Что отсекает автоматическая проверка
+One scene can support different textual angles: morning preparation, a change in mood, an amusing contradiction, a noticeable detail, or a question to the viewer. Every claim must match what is actually in the Reel.
 
-| Проверка | Условие |
+### Task prompt for preparing 12 texts
+
+Copy this **task template** and fill in the description and facts. The task structure is repeated, not ready-made captions:
+
+```text
+Reel: [what happens; which events and details are visible]
+Audience and language: [...]
+Tone: [...]
+Confirmed facts: [...]
+Previously used captions that must not be repeated: [...]
+
+Write 12 Instagram captions for the 12 variants of this Reel.
+Shared structure: hook → a concrete thought/detail → optional CTA → hashtags.
+Every caption needs a distinct perspective and fresh wording.
+Do not copy earlier captions. Do not limit the change to a number, emoji, or a few words.
+Do not invent events or facts that are not in the description.
+Every caption needs at least 3 relevant hashtags; full sets must not repeat.
+Check the texts pairwise and rewrite close variants.
+Return JSON in the form {"captions": [12 strings]}; represent line breaks inside a string as \n.
+```
+
+The script does not call a language model or generate captions. It receives prepared JSON.
+
+### What automatic validation rejects
+
+| Check | Condition |
 |---|---|
-| Количество | Ровно 12 непустых строк |
-| Точный дубль | После Unicode NFKC, `casefold` и нормализации пробелов все строки различаются |
-| Hashtags | Не менее 3 в каждой подписи, все 12 полных наборов различаются |
-| Близкая формулировка | `SequenceMatcher < 0.86` после удаления hashtags и пунктуации |
-| Общие слова | Token Jaccard `< 0.65` для каждой пары |
-| План | Текст в JSON и HTML должен совпасть с переданным файлом captions |
+| Count | Exactly 12 non-empty strings |
+| Exact duplicate | After Unicode NFKC, `casefold`, and whitespace normalization, all strings differ |
+| Hashtags | At least 3 in every caption; all 12 full sets differ |
+| Similar wording | `SequenceMatcher < 0.86` after removing hashtags and punctuation |
+| Shared words | Token Jaccard `< 0.65` for every pair |
+| Plan | Text in JSON and HTML must match the supplied captions file |
 
-Общие hashtags между подписями допустимы; проверяется повтор всего набора. Эти пороги взяты из исходного пайплайна и являются эвристиками. **Они не распознают смысл и не гарантируют уникальность текста.** Необычные перефразирования могут пройти, а нормальные короткие подписи — оказаться слишком похожими. Редактор перечитывает все 12 текстов и сравнивает их с прошлой публикацией. Проверка между разными пачками автоматически не выполняется.
+Shared hashtags between captions are allowed; repeated complete sets are checked. These thresholds come from the original pipeline and are heuristics. **They do not recognize meaning and do not guarantee unique text.** Unusual paraphrases may pass, while normal short captions may be considered too similar. An editor rereads all 12 texts and compares them with the previous post. Comparison between separate batches is not performed automatically.
 
-## Что проверяется
+## What is verified
 
-Проверка открывает каждый итоговый MP4 заново. Она не доверяет только настройкам команды или тому, что FFmpeg завершился успешно.
+Verification opens every final MP4 again. It does not trust only command settings or a successful FFmpeg exit.
 
-| Уровень | Проверка | Что подтверждает |
+| Level | Check | What it confirms |
 |---|---|---|
-| Декодирование | Полный video + audio decode с `-xerror` | Нет ошибок декодирования, обнаруженных этим прогоном |
-| Контейнер | SHA-256 всего MP4 | Различие файлов побайтно |
-| Видео | SHA-256 пакетов `-map 0:v:0 -c copy` | Различие сжатого видеопотока |
-| Аудио | SHA-256 пакетов `-map 0:a:0 -c copy` | Различие сжатого аудиопотока |
-| PCM | SHA-256 звука после decode в s16 / 48 kHz | Различие декодированных звуковых отсчётов |
-| Геометрия/время | Размеры, средний FPS и число декодированных кадров равны мастеру | Сохранены эти параметры видео |
-| Длительность | `abs(output − source) < 0.05 с` | Допустимая погрешность контейнерной длительности |
-| Формат | H.264 High / yuv420p, AAC 48 kHz, число каналов как у мастера | Выход соответствует выбранному формату |
-| Картинка | MAE и Pearson correlation к источнику и для всех 66 пар | Измеренное сходство уменьшенных выборок |
+| Decoding | Full video + audio decode with `-xerror` | No decoding errors found by this run |
+| Container | SHA-256 of the complete MP4 | Files differ byte for byte |
+| Video | SHA-256 of packets from `-map 0:v:0 -c copy` | Compressed video stream differs |
+| Audio | SHA-256 of packets from `-map 0:a:0 -c copy` | Compressed audio stream differs |
+| PCM | SHA-256 of audio after decoding to s16 / 48 kHz | Decoded audio samples differ |
+| Geometry/time | Dimensions, average FPS, and decoded frame count equal the master | These video parameters are preserved |
+| Duration | `abs(output − source) < 0.05 s` | Permitted container-duration tolerance |
+| Format | H.264 High / yuv420p, AAC 48 kHz, same channel count as the master | Output conforms to the selected format |
+| Image | MAE and Pearson correlation to the source and across all 66 pairs | Measured similarity of reduced samples |
 
-В SHA-256 потоков через `hash` не входят контейнерные timestamps; это не аналог визуального или акустического fingerprint Instagram. См. [FFmpeg hash muxer](https://ffmpeg.org/ffmpeg-formats.html#hash-1).
+Container timestamps are not included in stream SHA-256 through `hash`; it is not analogous to an Instagram visual or acoustic fingerprint. See the [FFmpeg hash muxer documentation](https://ffmpeg.org/ffmpeg-formats.html#hash-1).
 
-Визуальная выборка — `fps=4,scale=64:64,format=gray`. Нормализованный MAE считается как `mean(abs(A−B))/255`. **MAE 0.45% не означает «качество 99.55%».** Эта выборка не оценивает полноразмерные лица, мелкий текст, цвет, каждый кадр перехода или слышимость изменений. На равномерной выборке Pearson correlation не определена и записывается как `null`.
+The visual sample is `fps=4,scale=64:64,format=gray`. Normalized MAE is calculated as `mean(abs(A−B))/255`. **MAE 0.45% does not mean “99.55% quality.”** This sample does not assess full-size faces, fine text, color, every transition frame, or audibility of changes. For a uniform sample, Pearson correlation is undefined and recorded as `null`.
 
-`PASS` требует 12 разных значений каждого семейства хешей и успешных технических проверок. Для MAE/корреляции нет выдуманного «порога Instagram»: значения показываются для ручного просмотра, а не используются как доказательство распознавания платформой.
+`PASS` requires 12 distinct values for each hash family and successful technical checks. There is no invented “Instagram threshold” for MAE/correlation: the values are shown for manual review, not used as proof of platform recognition.
 
-### Проверено на исходном 010
+### Verified on source 010
 
-| Показатель | Результат |
+| Metric | Result |
 |---|---:|
-| Исходник | 768×1376 / 24 fps / 145 кадров / 6.042 с |
-| Выходные файлы | 12 |
-| Длительность каждого выхода | 6.048 с |
-| Разные контейнеры / видео / AAC / PCM | 12 / 12 / 12 / 12 |
-| Максимальный MAE между вариантами | 0.449813% |
-| Минимальная корреляция между вариантами | 0.99993913 |
-| Побайтное совпадение с первоначальной пачкой | 12 из 12 |
-| Совпадение двух последовательных полных прогонов | 12 из 12 |
+| Source | 768×1376 / 24 fps / 145 frames / 6.042 s |
+| Output files | 12 |
+| Duration of each output | 6.048 s |
+| Distinct containers / video / AAC / PCM | 12 / 12 / 12 / 12 |
+| Maximum MAE between variants | 0.449813% |
+| Minimum correlation between variants | 0.99993913 |
+| Byte-for-byte match with the original batch | 12 of 12 |
+| Match across two consecutive complete runs | 12 of 12 |
 
-Измерения сделаны **12 сентября 2026**. Это результат конкретного мастера и окружения, а не обещание для любого входа. Локальный [отчёт проверки](docs/validation.html) описывает метод проверки и её границы. Сам мастер и готовые личные видео в Git не входят.
+Measurements were taken **September 12, 2026**. This is the result for one specific master and environment, not a promise for every input. The local [verification report](docs/validation.html) describes the verification method and its limits. The master itself and completed personal videos are not included in Git.
 
-## Повторная проверка и обновление подписей
+## Re-verification and caption updates
 
-Перепроверить готовые MP4, не перекодируя их:
+Re-verify completed MP4s without re-encoding them:
 
 ```powershell
 python verify_variants.py "input\reel.mp4" "output\reel_010" --prefix 010
 ```
 
-После редактирования `input/captions.json` обновить план, сохранив видео:
+After editing `input/captions.json`, update the plan while preserving the video:
 
 ```powershell
 python posting_plan.py "output\reel_010" --prefix 010 --captions "input\captions.json"
@@ -306,62 +306,62 @@ python posting_plan.py "output\reel_010" --captions "input\captions.json" --veri
 python posting_plan.py "output\reel_010" --captions "input\captions.json" --verify
 ```
 
-`manifest.json` фиксирует входы **первоначальной сборки**. После отдельного редактирования подписей актуальные тексты находятся в переданном captions JSON и пересобранном плане; исходный `captions_sha256` в manifest автоматически не обновляется.
+`manifest.json` records the inputs of the **original build**. After captions are edited separately, the current texts are in the supplied captions JSON and the rebuilt plan; the original `captions_sha256` in the manifest is not automatically updated.
 
-### Расписание
+### Schedule
 
-В исходном процессе: **4 последовательных дня × 3 публикации**. Относительно начала каждого 24-часового периода — `T0`, `T0 + 5 часов`, `T0 + 10 часов`. Следующий период начинается через 24 часа.
+The original process uses **4 consecutive days × 3 posts**. Relative to the start of each 24-hour period: `T0`, `T0 + 5 hours`, `T0 + 10 hours`. The next period starts after 24 hours.
 
-Если T0 = 09:00, слоты будут 09:00 / 14:00 / 19:00. Если T0 позднее 14:00, третий слот может перейти на следующую календарную дату; подпись «день» обозначает период относительно T0. HTML всегда показывает фактическую дату.
+If T0 = 09:00, the slots are 09:00 / 14:00 / 19:00. If T0 is later than 14:00, the third slot may fall on the next calendar date; the label “day” denotes a period relative to T0. The HTML always shows the actual date.
 
-Это рабочая схема автора для организации файлов, **не рекомендация Instagram и не настройка автопостинга**. Подходящий момент публикации выбирается вручную.
+This is the author’s working scheme for organizing files, **not an Instagram recommendation or an auto-posting setting**. The suitable posting time is selected manually.
 
-### Другой профиль
+### Another profile
 
 ```powershell
 python uniquify.py "input\reel.mp4" "output\experiment_01" --prefix exp --captions "input\captions.json" --config "profiles\original_12.json"
 ```
 
-Для эксперимента сделайте отдельную копию JSON и измените `crf`, `audio_gain_db`, `luma_shift`. Нужны ровно 12 элементов с `index` от 1 до 12. Другой профиль уже не является точным воспроизведением исходной пачки. Проверка хешей и ручной просмотр остаются обязательными.
+For an experiment, make a separate JSON copy and change `crf`, `audio_gain_db`, and `luma_shift`. Exactly 12 items with `index` from 1 to 12 are required. Another profile is no longer an exact reproduction of the original batch. Hash verification and manual viewing remain mandatory.
 
-## Ограничения и разбор ошибок
+## Limitations and troubleshooting
 
-| Ситуация | Причина и действие |
+| Situation | Cause and action |
 |---|---|
-| `ffmpeg` / `ffprobe` не найдены | Добавьте каталог установленного FFmpeg в PATH, откройте новый терминал |
-| `Unknown encoder libx264` | Нужна сборка FFmpeg с этим кодеком |
-| Нет аудио | Профиль меняет настоящий звук; подготовьте мастер со звуковой дорожкой |
-| 12 разных PCM не получилось | Тишина или слишком похожий результат; изучите исходник и отчёт, не объявляйте такую пачку готовой |
-| 12 разных видеопотоков не получилось | На другом содержимом близкие CRF могут совпасть; измените отдельный экспериментальный профиль и проверьте заново |
-| Подписи похожи | Перепишите мысль и формулировку; замена emoji или tags не решает проблему |
-| Ошибка JSON | Проверьте кавычки, запятые, `\n`, UTF-8 и ровно 12 строк |
-| Папка уже существует | Укажите новое имя результата |
-| Осталась `.partial-...` | Сборка не прошла целиком; смотрите сообщение и файлы диагностики, исходная пачка не перезаписывается |
-| HDR, 10-bit, другой pixel format | Сначала подготовьте SDR 8-bit `yuv420p` мастер; автоматического tone mapping здесь нет |
-| Изменились FPS/число кадров | Подготовьте корректный мастер с постоянным FPS; этот профиль не предназначен для нормализации VFR |
-| 4K, высокий FPS | Исходный профиль заявляет H.264 level 4.1 и проверен на 768×1376@24; это не универсальный пресет для любого разрешения |
+| `ffmpeg` / `ffprobe` not found | Add the installed FFmpeg directory to PATH and open a new terminal |
+| `Unknown encoder libx264` | An FFmpeg build with this codec is required |
+| No audio | The profile changes real audio; prepare a master with an audio track |
+| 12 distinct PCM tracks were not produced | Silence or a result that is too similar; inspect the source and report, and do not declare the batch complete |
+| 12 distinct video streams were not produced | On different content, nearby CRFs may match; change a separate experimental profile and verify again |
+| Captions are similar | Rewrite the idea and wording; replacing emoji or tags does not solve the issue |
+| JSON error | Check quotation marks, commas, `\n`, UTF-8, and exactly 12 strings |
+| Directory already exists | Specify a new output name |
+| A `.partial-...` directory remains | The build did not complete; inspect the message and diagnostic files; the original batch is not overwritten |
+| HDR, 10-bit, or another pixel format | First prepare an SDR 8-bit `yuv420p` master; no automatic tone mapping is provided |
+| FPS/frame count changed | Prepare a correct constant-FPS master; this profile is not intended for VFR normalization |
+| 4K or high FPS | The original profile specifies H.264 level 4.1 and was verified at 768×1376@24; it is not a universal preset for every resolution |
 
-Проверяется только первая видеодорожка и первая аудиодорожка мастера; субтитры отдельным потоком, главы и дополнительные дорожки не переносятся. Не используйте этот шаг как замену полноценному мастерингу.
+Only the first video track and first audio track of the master are checked; subtitles as a separate stream, chapters, and additional tracks are not retained. Do not use this step as a replacement for full mastering.
 
-Перед публикацией просмотрите **полные MP4 со звуком**: лица и детали, читаемость надписей, переходы и музыку. Контактные листы и числовые метрики помогают сравнивать, но не заменяют этот просмотр. Платформенную эффективность метода можно оценить только отдельно; данные такого эксперимента в репозитории отсутствуют.
+Before publishing, review the **complete MP4s with sound**: faces and details, text readability, transitions, and music. Contact sheets and numerical metrics help comparison but do not replace this review. The platform effectiveness of the method can only be assessed separately; the repository contains no data from such an experiment.
 
-## Структура репозитория
+## Repository structure
 
 ```text
 .
 ├── README.md
-├── uniquify.py                 # последовательная сборка и финальная проверка
-├── verify_variants.py          # декодирование, хеши, метрики и HTML-отчёт
-├── posting_plan.py             # подписи, расписание, HTML и сверка плана
+├── uniquify.py                 # sequential build and final verification
+├── verify_variants.py          # decoding, hashes, metrics, and HTML report
+├── posting_plan.py             # captions, schedule, HTML, and plan verification
 ├── profiles/
-│   └── original_12.json         # точные параметры исходной пачки
+│   └── original_12.json         # exact parameters of the original batch
 ├── examples/
-│   └── captions_010.json        # пример формата; переписать под свой Reel
+│   └── captions_010.json        # format example; rewrite for your own Reel
 ├── docs/
-│   └── validation.html         # результаты проверки публикации
-└── .gitignore                  # локальные входы, результаты и служебные файлы
+│   └── validation.html         # publication verification results
+└── .gitignore                  # local inputs, outputs, and service files
 ```
 
-Это обычные процедурные Python-скрипты: запуск `python script.py`, без пакета, сборки и установки Python-зависимостей. Медиа, каталоги `input/`, `output/`, `tmp/` исключены из Git.
+These are ordinary procedural Python scripts: run `python script.py`, with no package, build step, or Python dependency installation. Media and the `input/`, `output/`, and `tmp/` directories are excluded from Git.
 
-**Автор и сопровождающий: [teskor-hub](https://github.com/teskor-hub).**
+**Author and maintainer: [teskor-hub](https://github.com/teskor-hub).**

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Instagram Reels — проверка публикации</title>
+<title>Instagram Reels — Release Verification</title>
 <style>
 :root{color-scheme:light dark;--bg:#f4f6fb;--card:#fff;--ink:#19243b;--muted:#596980;--line:#dbe2ee;--accent:#5745c8;--ok:#087c59}
 @media(prefers-color-scheme:dark){:root{--bg:#101622;--card:#1a2333;--ink:#edf1fb;--muted:#aab9cf;--line:#34435c;--accent:#b6a8ff;--ok:#68dcb0}}
@@ -19,40 +19,40 @@ code{font-size:.87em;overflow-wrap:anywhere}.table{overflow:auto}.note{border-le
 </style>
 </head>
 <body><main>
-<div class="eyebrow">INSTAGRAM REELS · ПРОВЕРКА ПУБЛИКАЦИИ · 12.09.2026</div>
-<h1>Исходный метод воспроизведён</h1>
-<p class="lead">Два последовательных полных прогона на настоящем мастере 010. Полученные файлы совпали с первоначальной рабочей пачкой.</p>
+<div class="eyebrow">INSTAGRAM REELS · RELEASE VERIFICATION · 12 SEPTEMBER 2026</div>
+<h1>The original method reproduced</h1>
+<p class="lead">Two consecutive end-to-end runs on the actual 010 master. The output files matched the original production batch.</p>
 <div class="grid">
-<div class="card"><div class="metric">12 / 12</div><div>MP4 побайтно совпали с оригинальной пачкой</div></div>
-<div class="card"><div class="metric">2 / 2</div><div>полных прогона завершились PASS</div></div>
-<div class="card"><div class="metric">4 × 12</div><div>различных хешей в каждой пачке: MP4, H.264, AAC, PCM</div></div>
+<div class="card"><div class="metric">12 / 12</div><div>MP4 files matched the original batch byte for byte</div></div>
+<div class="card"><div class="metric">2 / 2</div><div>complete runs finished with PASS</div></div>
+<div class="card"><div class="metric">4 × 12</div><div>distinct hashes per batch: MP4, H.264, AAC, PCM</div></div>
 </div>
-<section><h2>Вход и окружение</h2>
-<p>Мастер: <code>010_reel_fullframe_dip_continuous_music.mp4</code>. 768×1376, 24 fps, 145 кадров, 6.042 с, stereo. Исходные видео в репозитории не публикуются.</p>
-<p>Windows; Python 3.14; FFmpeg 8.0.1-full_build-www.gyan.dev. Профиль: <code>profiles/original_12.json</code>.</p>
-<p class="muted">SHA-256 источника:<br><code>8f0f73e439ec3304d32cf7af887734b6fa60650143902b03c1b8f01c9d3de55f</code></p>
+<section><h2>Input and environment</h2>
+<p>Master: <code>010_reel_fullframe_dip_continuous_music.mp4</code>. 768×1376, 24 fps, 145 frames, 6.042 s, stereo. The source videos are not published in this repository.</p>
+<p>Windows; Python 3.14; FFmpeg 8.0.1-full_build-www.gyan.dev. Profile: <code>profiles/original_12.json</code>.</p>
+<p class="muted">Source SHA-256:<br><code>8f0f73e439ec3304d32cf7af887734b6fa60650143902b03c1b8f01c9d3de55f</code></p>
 </section>
-<section><h2>Проверка реальных файлов</h2><div class="table"><table>
-<thead><tr><th>Проверка</th><th>Результат</th></tr></thead><tbody>
-<tr><td>Первоначальная папка: размеры и SHA-256 против сохранённого отчёта</td><td>12 / 12 совпадений</td></tr>
-<tr><td>Новый прогон против первоначального отчёта: MP4, H.264, AAC, decoded PCM</td><td>12 / 12 по каждому семейству</td></tr>
-<tr><td>Второй прогон против первого: SHA-256 MP4</td><td>12 / 12 совпадений</td></tr>
-<tr><td>Полное декодирование video + audio</td><td>Все 24 новых MP4 без ошибок</td></tr>
-<tr><td>Разрешение / FPS / количество кадров</td><td>768×1376 / 24 / 145 сохранены</td></tr>
-<tr><td>Длительность вариантов</td><td>6.048 с; отклонение от источника 0.006 с</td></tr>
-<tr><td>Параметры выхода</td><td>H.264 High, yuv420p; AAC, 48 kHz, stereo</td></tr>
-<tr><td>Максимальный MAE между вариантами</td><td>0.00449813 = 0.449813%</td></tr>
-<tr><td>Минимальная Pearson correlation между вариантами</td><td>0.99993913</td></tr>
-<tr><td>План и подписи</td><td>12 текстов; JSON и HTML согласованы; проверка дважды на каждую пачку</td></tr>
+<section><h2>Verification of the actual files</h2><div class="table"><table>
+<thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>
+<tr><td>Original directory: file sizes and SHA-256 compared with the saved report</td><td>12 / 12 matches</td></tr>
+<tr><td>New run compared with the original report: MP4, H.264, AAC, decoded PCM</td><td>12 / 12 for each hash family</td></tr>
+<tr><td>Second run compared with the first: MP4 SHA-256</td><td>12 / 12 matches</td></tr>
+<tr><td>Full video and audio decoding</td><td>All 24 new MP4 files decoded without errors</td></tr>
+<tr><td>Resolution / FPS / frame count</td><td>768×1376 / 24 / 145 preserved</td></tr>
+<tr><td>Variant duration</td><td>6.048 s; 0.006 s difference from the source</td></tr>
+<tr><td>Output format</td><td>H.264 High, yuv420p; AAC, 48 kHz, stereo</td></tr>
+<tr><td>Maximum pairwise visual MAE</td><td>0.00449813 = 0.449813%</td></tr>
+<tr><td>Minimum pairwise Pearson correlation</td><td>0.99993913</td></tr>
+<tr><td>Plan and captions</td><td>12 captions; JSON and HTML match; checked twice for each batch</td></tr>
 </tbody></table></div></section>
-<section><h2>Что доказывают результаты</h2>
-<p>Перенос исходного метода воспроизводит его фактические файлы на проверенном окружении. В пределах каждой пачки различаются контейнеры, сжатые потоки и декодированный звук. Повторный запуск с теми же настройками возвращает прежние варианты.</p>
-<p>Картинка измерена на выборке 4 кадра/с, уменьшенной до 64×64 grayscale, для всех 66 пар. Контактные листы мастера и u12 просмотрены: основные кадры, композиция и экранные надписи сохраняются. Это не полноразмерный просмотр всех кадров и не прослушивание всех MP4.</p>
+<section><h2>What these results establish</h2>
+<p>The extracted implementation reproduces the original method's actual files in the verified environment. Within each batch, the containers, compressed streams, and decoded audio differ. Running the same settings again reproduces the same variants.</p>
+<p>Visual metrics were measured for all 66 pairs using a 4 fps sample reduced to 64×64 grayscale. Contact sheets of the master and u12 were inspected: the main frames, composition, and on-screen text are preserved. This was not a full-resolution review of every frame or an audio review of every MP4.</p>
 </section>
-<section class="note"><h2>Границы проверки</h2>
-<p>Распознавание дубликатов Instagram, охваты и результат публикации не проверялись. MAE не является оценкой процента качества или метрикой платформы. Смысловое различие подписей подтверждается вручную: общий каркас разрешён, копирование текста и косметические вариации не подходят.</p>
-<p><b>Визуальный рендер HTML в браузере — не проверено.</b> Встроенный браузер заблокировал локальные file:// адреса. Проверки структуры HTML и JavaScript выполняются отдельно; обход браузерного ограничения не использовался.</p>
-<p>Поведение на другом исходнике, другой сборке FFmpeg и другой ОС требует собственного прогона. Готовность файлов к публикации дополнительно требует полного ручного просмотра со звуком.</p>
+<section class="note"><h2>Verification limits</h2>
+<p>Instagram duplicate recognition, reach, and publication outcomes were not tested. MAE is neither a quality percentage nor a platform metric. Meaningful differences between captions require human review: a shared structure is allowed, but copied text and cosmetic variations are not.</p>
+<p><b>Visual HTML rendering in a browser: not verified.</b> The in-app browser blocked local file:// URLs. HTML structure and JavaScript checks are performed separately; no workaround was used to bypass the browser restriction.</p>
+<p>Other source videos, FFmpeg builds, and operating systems require their own verification runs. Publication readiness also requires watching the complete files with sound.</p>
 </section>
-<p class="muted">Автор и сопровождающий проекта: teskor-hub. Воспроизводимые команды, параметры и формат подписей — в README.md рядом с кодом.</p>
+<p class="muted">Author and maintainer: teskor-hub. Reproduction commands, parameters, and the caption format are documented in README.md alongside the code.</p>
 </main></body></html>

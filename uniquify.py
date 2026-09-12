@@ -1,4 +1,4 @@
-"""Один готовый Reel → 12 вариантов по профилю 010 и проверенный план публикаций."""
+"""One finished Reel → 12 variants using profile 010 and a verified posting plan."""
 
 import argparse
 from datetime import datetime, timezone
@@ -20,14 +20,14 @@ def load_profile(path):
     profile = json.loads(path.read_text(encoding="utf-8-sig"))
     variants = profile.get("variants", [])
     if len(variants) != 12 or [v.get("index") for v in variants] != list(range(1, 13)):
-        raise ValueError("Профиль должен содержать ровно 12 вариантов с index 1..12")
+        raise ValueError("The profile must contain exactly 12 variants with indexes 1..12")
     for variant in variants:
         for key, low, high in (("crf", 0, 51), ("audio_gain_db", -60, 0)):
             value = variant.get(key)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not low <= value <= high:
-                raise ValueError(f"Недопустимый {key} в варианте {variant['index']}")
+                raise ValueError(f"Invalid {key} in variant {variant['index']}")
         if not isinstance(variant.get("luma_shift"), bool):
-            raise ValueError("luma_shift должен быть true или false")
+            raise ValueError("luma_shift must be true or false")
     return profile
 
 
@@ -52,10 +52,10 @@ def encode_command(source, destination, variant):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("source", type=Path, help="готовый локальный MP4 с видео и аудио")
-    parser.add_argument("output", type=Path, help="новая папка результата")
+    parser.add_argument("source", type=Path, help="finished local MP4 with video and audio")
+    parser.add_argument("output", type=Path, help="new output directory")
     parser.add_argument("--prefix", default="reel")
-    parser.add_argument("--captions", type=Path, required=True, help="JSON с 12 подписями для этого ролика")
+    parser.add_argument("--captions", type=Path, required=True, help="JSON with 12 captions for this Reel")
     parser.add_argument("--config", type=Path, default=DEFAULT_PROFILE)
     args = parser.parse_args()
     staging = None
@@ -64,18 +64,18 @@ def main():
         validate_prefix(args.prefix)
         source, output = args.source.resolve(), args.output.resolve()
         if not source.is_file():
-            raise ValueError(f"Нет исходного файла: {source}")
+            raise ValueError(f"Source file not found: {source}")
         if output.exists():
-            raise ValueError(f"Папка результата уже существует; укажи новую: {output}")
+            raise ValueError(f"Output directory already exists; specify a new one: {output}")
         profile = load_profile(args.config)
         captions = load_captions(args.captions)
         source_video, source_audio = primary_streams(probe(source))
         if source_video["width"] % 2 or source_video["height"] % 2:
-            raise ValueError("Для yuv420p нужны чётные ширина и высота")
+            raise ValueError("yuv420p requires even width and height")
         if source_video.get("pix_fmt") != "yuv420p" or source_video.get("color_transfer") in ("smpte2084", "arib-std-b67"):
-            raise ValueError("Этот профиль рассчитан на SDR yuv420p 8-bit; сначала подготовь мастер")
+            raise ValueError("This profile requires an SDR yuv420p 8-bit master; prepare the master first")
         if source_audio["channels"] not in (1, 2):
-            raise ValueError("Нужен мастер с mono или stereo аудио")
+            raise ValueError("The master must have mono or stereo audio")
         output.parent.mkdir(parents=True, exist_ok=True)
         staging = output.with_name(f".{output.name}.partial-{uuid.uuid4().hex[:8]}")
         staging.mkdir()
@@ -102,12 +102,12 @@ def main():
             if errors:
                 raise ValueError("; ".join(errors))
         if file_hash(source) != manifest["source_sha256"]:
-            raise ValueError("Источник изменился во время обработки")
+            raise ValueError("The source changed during processing")
         # Только полностью проверенная пачка получает имя итоговой папки.
         staging.rename(output)
         print(f"PASS: {output}\n12 MP4 + verification.html + upload_plan.html", flush=True)
     except (ValueError, OSError, KeyError) as exc:
-        suffix = f"\nДиагностическая папка: {staging}" if staging and staging.exists() else ""
+        suffix = f"\nDiagnostic directory: {staging}" if staging and staging.exists() else ""
         parser.exit(1, f"FAIL: {exc}{suffix}\n")
 
 
