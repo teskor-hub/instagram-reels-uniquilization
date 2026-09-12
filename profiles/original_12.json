@@ -1,0 +1,18 @@
+{
+  "name": "original_010_12",
+  "description": "Точные CRF, audio gain и luma-флаги исходной пачки 010; порядок сохранён.",
+  "variants": [
+    {"index": 1, "crf": 27.5, "audio_gain_db": -0.03, "luma_shift": false},
+    {"index": 2, "crf": 27.4, "audio_gain_db": -0.06, "luma_shift": false},
+    {"index": 3, "crf": 20.0, "audio_gain_db": -0.09, "luma_shift": true},
+    {"index": 4, "crf": 19.9, "audio_gain_db": -0.12, "luma_shift": true},
+    {"index": 5, "crf": 19.8, "audio_gain_db": -0.15, "luma_shift": true},
+    {"index": 6, "crf": 27.3, "audio_gain_db": -0.18, "luma_shift": false},
+    {"index": 7, "crf": 27.2, "audio_gain_db": -0.21, "luma_shift": false},
+    {"index": 8, "crf": 27.1, "audio_gain_db": -0.24, "luma_shift": false},
+    {"index": 9, "crf": 19.7, "audio_gain_db": -0.27, "luma_shift": true},
+    {"index": 10, "crf": 19.6, "audio_gain_db": -0.30, "luma_shift": true},
+    {"index": 11, "crf": 19.5, "audio_gain_db": -0.33, "luma_shift": true},
+    {"index": 12, "crf": 19.4, "audio_gain_db": -0.36, "luma_shift": true}
+  ]
+}

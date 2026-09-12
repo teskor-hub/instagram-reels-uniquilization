@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Instagram Reels — проверка публикации</title>
+<style>
+:root{color-scheme:light dark;--bg:#f4f6fb;--card:#fff;--ink:#19243b;--muted:#596980;--line:#dbe2ee;--accent:#5745c8;--ok:#087c59}
+@media(prefers-color-scheme:dark){:root{--bg:#101622;--card:#1a2333;--ink:#edf1fb;--muted:#aab9cf;--line:#34435c;--accent:#b6a8ff;--ok:#68dcb0}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,sans-serif}
+main{max-width:1080px;margin:auto;padding:48px 24px 72px}.eyebrow{color:var(--accent);font-weight:700;letter-spacing:.12em;font-size:12px}
+h1{font-size:clamp(30px,5vw,48px);line-height:1.1;margin:16px 0}h2{font-size:23px;margin:0 0 12px}p{margin:10px 0}
+.lead{font-size:19px;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:28px 0}
+.card,section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px}
+.grid .card{margin:0}.metric{font-size:32px;font-weight:750;color:var(--ok)}.muted{color:var(--muted)}
+table{border-collapse:collapse;width:100%}td,th{padding:11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+code{font-size:.87em;overflow-wrap:anywhere}.table{overflow:auto}.note{border-left:4px solid var(--accent)}
+@media(max-width:700px){.grid{grid-template-columns:1fr}main{padding:24px 16px}.card,section{padding:16px}}
+</style>
+</head>
+<body><main>
+<div class="eyebrow">INSTAGRAM REELS · ПРОВЕРКА ПУБЛИКАЦИИ · 12.09.2026</div>
+<h1>Исходный метод воспроизведён</h1>
+<p class="lead">Два последовательных полных прогона на настоящем мастере 010. Полученные файлы совпали с первоначальной рабочей пачкой.</p>
+<div class="grid">
+<div class="card"><div class="metric">12 / 12</div><div>MP4 побайтно совпали с оригинальной пачкой</div></div>
+<div class="card"><div class="metric">2 / 2</div><div>полных прогона завершились PASS</div></div>
+<div class="card"><div class="metric">4 × 12</div><div>различных хешей в каждой пачке: MP4, H.264, AAC, PCM</div></div>
+</div>
+<section><h2>Вход и окружение</h2>
+<p>Мастер: <code>010_reel_fullframe_dip_continuous_music.mp4</code>. 768×1376, 24 fps, 145 кадров, 6.042 с, stereo. Исходные видео в репозитории не публикуются.</p>
+<p>Windows; Python 3.14; FFmpeg 8.0.1-full_build-www.gyan.dev. Профиль: <code>profiles/original_12.json</code>.</p>
+<p class="muted">SHA-256 источника:<br><code>8f0f73e439ec3304d32cf7af887734b6fa60650143902b03c1b8f01c9d3de55f</code></p>
+</section>
+<section><h2>Проверка реальных файлов</h2><div class="table"><table>
+<thead><tr><th>Проверка</th><th>Результат</th></tr></thead><tbody>
+<tr><td>Первоначальная папка: размеры и SHA-256 против сохранённого отчёта</td><td>12 / 12 совпадений</td></tr>
+<tr><td>Новый прогон против первоначального отчёта: MP4, H.264, AAC, decoded PCM</td><td>12 / 12 по каждому семейству</td></tr>
+<tr><td>Второй прогон против первого: SHA-256 MP4</td><td>12 / 12 совпадений</td></tr>
+<tr><td>Полное декодирование video + audio</td><td>Все 24 новых MP4 без ошибок</td></tr>
+<tr><td>Разрешение / FPS / количество кадров</td><td>768×1376 / 24 / 145 сохранены</td></tr>
+<tr><td>Длительность вариантов</td><td>6.048 с; отклонение от источника 0.006 с</td></tr>
+<tr><td>Параметры выхода</td><td>H.264 High, yuv420p; AAC, 48 kHz, stereo</td></tr>
+<tr><td>Максимальный MAE между вариантами</td><td>0.00449813 = 0.449813%</td></tr>
+<tr><td>Минимальная Pearson correlation между вариантами</td><td>0.99993913</td></tr>
+<tr><td>План и подписи</td><td>12 текстов; JSON и HTML согласованы; проверка дважды на каждую пачку</td></tr>
+</tbody></table></div></section>
+<section><h2>Что доказывают результаты</h2>
+<p>Перенос исходного метода воспроизводит его фактические файлы на проверенном окружении. В пределах каждой пачки различаются контейнеры, сжатые потоки и декодированный звук. Повторный запуск с теми же настройками возвращает прежние варианты.</p>
+<p>Картинка измерена на выборке 4 кадра/с, уменьшенной до 64×64 grayscale, для всех 66 пар. Контактные листы мастера и u12 просмотрены: основные кадры, композиция и экранные надписи сохраняются. Это не полноразмерный просмотр всех кадров и не прослушивание всех MP4.</p>
+</section>
+<section class="note"><h2>Границы проверки</h2>
+<p>Распознавание дубликатов Instagram, охваты и результат публикации не проверялись. MAE не является оценкой процента качества или метрикой платформы. Смысловое различие подписей подтверждается вручную: общий каркас разрешён, копирование текста и косметические вариации не подходят.</p>
+<p><b>Визуальный рендер HTML в браузере — не проверено.</b> Встроенный браузер заблокировал локальные file:// адреса. Проверки структуры HTML и JavaScript выполняются отдельно; обход браузерного ограничения не использовался.</p>
+<p>Поведение на другом исходнике, другой сборке FFmpeg и другой ОС требует собственного прогона. Готовность файлов к публикации дополнительно требует полного ручного просмотра со звуком.</p>
+</section>
+<p class="muted">Автор и сопровождающий проекта: teskor-hub. Воспроизводимые команды, параметры и формат подписей — в README.md рядом с кодом.</p>
+</main></body></html>
